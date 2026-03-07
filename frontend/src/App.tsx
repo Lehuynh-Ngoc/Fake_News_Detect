@@ -4,7 +4,14 @@ import axios from 'axios'
 interface PredictionResult {
   text: string;
   prediction: string;
-  confidence: number;
+  warning_confidence: number;
+  news_reliability: number;
+  analysis: {
+    summary: string;
+    details: string[];
+    patterns_found: string[];
+    is_fact_check: boolean;
+  };
 }
 
 function App() {
@@ -87,25 +94,62 @@ function App() {
           <div className={`rounded-xl shadow-lg p-8 border-l-8 ${
             result.prediction === 'Fake' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'
           }`}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <h2 className={`text-2xl font-bold ${
                 result.prediction === 'Fake' ? 'text-red-700' : 'text-green-700'
               }`}>
                 {result.prediction === 'Fake' ? '⚠️ CẢNH BÁO: TIN GIẢ' : '✅ TIN THẬT'}
               </h2>
-              <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                result.prediction === 'Fake' ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'
-              }`}>
-                Độ tin cậy: {(result.confidence * 100).toFixed(1)}%
-              </span>
+              <div className="flex flex-col gap-2">
+                <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  result.prediction === 'Fake' ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'
+                }`}>
+                  Độ chính xác cảnh báo: {(result.warning_confidence * 100).toFixed(1)}%
+                </span>
+                <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  result.news_reliability < 0.5 ? 'bg-orange-200 text-orange-800' : 'bg-blue-200 text-blue-800'
+                }`}>
+                  Độ tin cậy của tin: {(result.news_reliability * 100).toFixed(1)}%
+                </span>
+              </div>
             </div>
-            
-            <p className="text-slate-700 italic">
-              "Dựa trên phân tích nội dung, hệ thống dự đoán đây là {result.prediction === 'Fake' ? 'tin giả hoặc tin sai sự thật' : 'tin tức có độ xác thực cao'}."
-            </p>
-            
-            <div className="mt-6 text-sm text-slate-500">
-              * Kết quả chỉ mang tính tham khảo. Hãy luôn kiểm chứng từ các nguồn tin chính thống.
+
+            <div className="space-y-6">
+              <div className="bg-white/50 p-5 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
+                  <span className="mr-2">🔍</span> Phân tích chi tiết từ AI
+                </h3>
+                <p className="text-slate-700 font-medium mb-4 pb-3 border-b border-slate-200">
+                  {result.analysis.summary}
+                </p>
+                <ul className="space-y-3">
+                  {result.analysis.details.map((detail, i) => (
+                    <li key={i} className="flex items-start text-sm text-slate-600">
+                      <span className="text-blue-500 mr-2">•</span>
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {result.analysis.patterns_found.length > 0 && (
+                <div className="bg-red-100/50 p-5 rounded-lg border border-red-200">
+                  <h3 className="text-sm font-bold text-red-800 mb-3 uppercase tracking-wider">
+                    Các dấu hiệu nghi vấn cụ thể:
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {result.analysis.patterns_found.map((p, i) => (
+                      <span key={i} className="bg-white px-3 py-1 rounded border border-red-200 text-xs text-red-700 font-medium">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 text-sm text-slate-500 pt-4 border-t border-slate-200">
+              * Kết quả được đánh giá bởi AI. Hãy luôn kiểm chứng từ các nguồn tin chính thống.
             </div>
           </div>
         )}

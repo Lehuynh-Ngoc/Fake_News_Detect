@@ -12,6 +12,27 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from src.preprocess import clean_text
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.utils import resample
+
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import FeatureUnion
+from sklearn.preprocessing import FunctionTransformer
+import numpy as np
+
+def get_text_features(text_series):
+    # Tính toán các đặc trưng bổ sung: độ dài, số lượng dấu chấm than, số lượng chữ số
+    features = []
+    for text in text_series:
+        text_str = str(text)
+        length = len(text_str)
+        exclamation_count = text_str.count('!')
+        digit_count = sum(c.isdigit() for c in text_str)
+        capitals_count = sum(1 for c in text_str if c.isupper())
+        features.append([length, exclamation_count, digit_count, capitals_count])
+    return np.array(features)
+
 def train_model(data_path, model_output_path):
     print(f"Loading data from {data_path}...")
     if not os.path.exists(data_path):
@@ -24,30 +45,34 @@ def train_model(data_path, model_output_path):
         print(f"Error reading CSV: {e}")
         return
 
-    # Check columns
     text_col = 'text' if 'text' in df.columns else 'post_message'
-    if text_col not in df.columns or 'label' not in df.columns:
-        print(f"Error: CSV must contain '{text_col}' and 'label' columns. Found: {df.columns.tolist()}")
-        return
-
-    # Drop NaNs
     df.dropna(subset=[text_col, 'label'], inplace=True)
     
-    print(f"Preprocessing text from column '{text_col}'...")
-    # Use only first 10k rows for faster training if dataset is too large, 
-    # but 4.5MB (~4000 rows) is fine for full training.
+    print("Preprocessing and balancing data...")
     df['clean_text'] = df[text_col].apply(clean_text)
 
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(
-        df['clean_text'], df['label'], test_size=0.2, random_state=42, stratify=df['label']
-    )
+    # Cân bằng dữ liệu (Oversampling)
+    df_majority = df[df.label == 0]
+    df_minority = df[df.label == 1]
+    df_minority_upsampled = resample(df_minority, replace=True, n_samples=len(df_majority), random_state=42)
+    df_balanced = pd.concat([df_majority, df_minority_upsampled])
 
-    print("Training model...")
-    # Pipeline: TF-IDF -> Logistic Regression
+    X = df_balanced['clean_text']
+    y = df_balanced['label']
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+
+    print("Training Advanced Hybrid Model...")
+    
+    # Kết hợp Word TF-IDF và Char TF-IDF (Phân tích sâu cấu trúc từ như Huffman)
+    features = FeatureUnion([
+        ('word_tfidf', TfidfVectorizer(ngram_range=(1, 3), sublinear_tf=True, max_features=5000)),
+        ('char_tfidf', TfidfVectorizer(ngram_range=(2, 5), analyzer='char', sublinear_tf=True, max_features=5000)),
+    ])
+
     pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer(ngram_range=(1, 2))),
-        ('clf', LogisticRegression(random_state=42))
+        ('features', features),
+        ('clf', RandomForestClassifier(n_estimators=300, max_depth=None, min_samples_split=2, random_state=42, n_jobs=-1))
     ])
 
     pipeline.fit(X_train, y_train)
@@ -55,8 +80,7 @@ def train_model(data_path, model_output_path):
     print("Evaluating model...")
     y_pred = pipeline.predict(X_test)
     print(classification_report(y_test, y_pred))
-    print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
-
+    
     print(f"Saving model to {model_output_path}...")
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
     joblib.dump(pipeline, model_output_path)

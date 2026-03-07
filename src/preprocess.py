@@ -18,9 +18,13 @@ def clean_text(text):
     # 1. Lowercase
     text = text.lower()
     
-    # 2. Remove special characters (keep Vietnamese accents)
-    # This regex keeps letters, numbers, and basic punctuation, removing obscure symbols
-    text = re.sub(r'[^\w\s]', ' ', text)
+    # 2. Remove special characters but keep some punctuation for sentiment/intent
+    # Keep Vietnamese characters, digits, and !? marks
+    text = re.sub(r'[^\w\s!?]', ' ', text)
+    # Add spaces around ! and ? to make them separate tokens
+    text = re.sub(r'([!?])', r' \1 ', text)
+    # Replace multiple spaces with one
+    text = re.sub(r'\s+', ' ', text).strip()
     
     # 3. Tokenize
     tokens = word_tokenize(text, format="text")
