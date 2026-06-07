@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import TheoryPage from './pages/TheoryPage'
+import TrainingPage from './pages/TrainingPage'
 
 interface ModelEducation {
   name: string;
@@ -35,7 +36,7 @@ interface PredictionResponse {
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'detector' | 'theory'>('detector')
+  const [currentView, setCurrentView] = useState<'detector' | 'theory' | 'training'>('detector')
   const [newsText, setNewsText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<PredictionResponse | null>(null)
@@ -47,7 +48,7 @@ function App() {
       const firstModel = Object.keys(result.results)[0];
       if (firstModel) setActiveTab(firstModel);
     }
-  }, [result])
+  }, [result, activeTab])
 
   const handleCheck = async () => {
     if (!newsText.trim()) {
@@ -69,9 +70,9 @@ function App() {
       } else {
         setError('Máy chủ không trả về kết quả phân tích.')
       }
-    } catch (err: any) {
-      console.error('API Error:', err)
-      setError(`Lỗi kết nối máy chủ: ${err.response?.data?.detail || err.message}`)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Lỗi kết nối máy chủ: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -88,9 +89,9 @@ function App() {
           { label: 'Precision', val: metrics.precision, color: 'orange' },
           { label: 'Báo động giả', val: metrics.false_alarm_rate, color: 'red' },
         ].map((m, i) => (
-          <div key={i} className={`bg-${m.color}-50 p-3 rounded-lg text-center border border-${m.color}-100 shadow-sm`}>
-            <p className={`text-[10px] text-${m.color}-600 font-black uppercase mb-1`}>{m.label}</p>
-            <p className={`text-xl font-black text-${m.color}-800`}>{(m.val * 100).toFixed(1)}%</p>
+          <div key={i} className={`bg-slate-50 p-3 rounded-lg text-center border border-slate-100 shadow-sm`}>
+            <p className="text-[10px] text-slate-500 font-black uppercase mb-1">{m.label}</p>
+            <p className="text-xl font-black text-slate-800">{(m.val * 100).toFixed(1)}%</p>
           </div>
         ))}
       </div>
@@ -113,7 +114,6 @@ function App() {
         </h3>
         
         <div className="relative">
-          {/* Header Labels */}
           <div className="grid grid-cols-4 mb-2">
             <div className="col-span-1"></div>
             <div className="col-span-1 text-center py-2">
@@ -126,57 +126,33 @@ function App() {
           </div>
 
           <div className="grid grid-cols-4 gap-3 items-stretch">
-            {/* Row 1: Actual Real */}
             <div className="flex items-center justify-end pr-4 text-right">
               <span className="text-[10px] font-black text-slate-400 uppercase leading-none">Thực tế<br/>Thật</span>
             </div>
-            
-            <div className="group relative bg-emerald-50 border-2 border-emerald-100 p-6 rounded-2xl text-center transition-all hover:scale-105 hover:shadow-lg hover:shadow-emerald-100">
+            <div className="relative bg-emerald-50 border-2 border-emerald-100 p-6 rounded-2xl text-center">
                <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded-full uppercase">TN</div>
                <p className="text-3xl font-black text-emerald-700">{tn}</p>
-               <p className="text-[10px] text-emerald-600 font-bold uppercase mt-1">Đúng</p>
             </div>
-
-            <div className="group relative bg-rose-50 border-2 border-rose-100 p-6 rounded-2xl text-center transition-all hover:scale-105 hover:shadow-lg hover:shadow-rose-100">
+            <div className="relative bg-rose-50 border-2 border-rose-100 p-6 rounded-2xl text-center">
                <div className="absolute top-2 left-2 px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full uppercase">FP</div>
                <p className="text-3xl font-black text-rose-700">{fp}</p>
-               <p className="text-[10px] text-rose-600 font-bold uppercase mt-1">Sai</p>
             </div>
-
             <div className="col-span-1"></div>
-
-            {/* Row 2: Actual Fake */}
             <div className="flex items-center justify-end pr-4 text-right">
               <span className="text-[10px] font-black text-slate-400 uppercase leading-none">Thực tế<br/>Giả</span>
             </div>
-
-            <div className="group relative bg-rose-50 border-2 border-rose-100 p-6 rounded-2xl text-center transition-all hover:scale-105 hover:shadow-lg hover:shadow-rose-100">
+            <div className="relative bg-rose-50 border-2 border-rose-100 p-6 rounded-2xl text-center">
                <div className="absolute top-2 left-2 px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full uppercase">FN</div>
                <p className="text-3xl font-black text-rose-700">{fn}</p>
-               <p className="text-[10px] text-rose-600 font-bold uppercase mt-1">Sai</p>
             </div>
-
-            <div className="group relative bg-emerald-50 border-2 border-emerald-100 p-6 rounded-2xl text-center transition-all hover:scale-105 hover:shadow-lg hover:shadow-emerald-100">
+            <div className="relative bg-emerald-50 border-2 border-emerald-100 p-6 rounded-2xl text-center">
                <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded-full uppercase">TP</div>
                <p className="text-3xl font-black text-emerald-700">{tp}</p>
-               <p className="text-[10px] text-emerald-600 font-bold uppercase mt-1">Đúng</p>
             </div>
-            
             <div className="col-span-1"></div>
           </div>
         </div>
-
         <div className="mt-8 flex items-center justify-between border-t border-slate-50 pt-6">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-emerald-500"></div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Chính xác</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-rose-500"></div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Nhầm lẫn</span>
-            </div>
-          </div>
           <p className="text-slate-400 text-[10px] italic font-black uppercase tracking-widest">
             TỔNG MẪU KIỂM THỬ: {total}
           </p>
@@ -188,64 +164,77 @@ function App() {
   if (currentView === 'theory') {
     return (
       <>
-        <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="font-black text-xl text-slate-900 tracking-tighter">AI <span className="text-blue-600">ACADEMY</span></div>
+        <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+            <div className="font-black text-xl text-slate-900 tracking-tighter uppercase">AI <span className="text-blue-600">ACADEMY</span></div>
             <button 
               onClick={() => setCurrentView('detector')}
-              className="px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold hover:bg-slate-800 transition-all"
+              className="px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold"
             >
-              ← Quay lại Kiểm tra
+              ← QUAY LẠI
             </button>
-          </div>
         </nav>
         <TheoryPage />
       </>
     )
   }
 
+  if (currentView === 'training') {
+    return (
+      <>
+        <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+            <div className="font-black text-xl text-slate-900 tracking-tighter uppercase">AI <span className="text-blue-600">TRAINING</span></div>
+            <button 
+              onClick={() => setCurrentView('detector')}
+              className="px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold"
+            >
+              ← QUAY LẠI
+            </button>
+        </nav>
+        <TrainingPage />
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
-      {/* Header with Nav */}
-      <nav className="bg-white border-b border-slate-100 px-6 py-4 mb-12 shadow-sm">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <div className="font-black text-2xl text-slate-900 tracking-tighter">FAKE<span className="text-blue-600">NEWS</span> DETECT</div>
-          <button 
-            onClick={() => setCurrentView('theory')}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-black hover:bg-blue-100 transition-all border border-blue-200"
-          >
-            📚 HỌC LÝ THUYẾT AI
-          </button>
-        </div>
+      <nav className="bg-white border-b border-slate-100 px-6 py-4 mb-12 shadow-sm flex justify-between items-center">
+          <div className="font-black text-2xl text-slate-900 tracking-tighter uppercase">FAKE<span className="text-blue-600">NEWS</span> DETECT</div>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setCurrentView('training')}
+              className="px-6 py-2 bg-emerald-50 text-emerald-600 rounded-full text-sm font-black border border-emerald-200 uppercase"
+            >
+              🚀 HUẤN LUYỆN
+            </button>
+            <button 
+              onClick={() => setCurrentView('theory')}
+              className="px-6 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-black border border-blue-200 uppercase"
+            >
+              📚 LÝ THUYẾT
+            </button>
+          </div>
       </nav>
 
       <div className="max-w-5xl mx-auto px-4 pb-20">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">Hệ Thống Phân Tích <span className="text-blue-600">Đa Mô Hình</span></h1>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">Nhập nội dung tin tức để xem cách các thuật toán AI khác nhau đưa ra kết luận.</p>
+          <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium text-center">Nhập nội dung tin tức để xem cách các thuật toán AI khác nhau đưa ra kết luận.</p>
         </div>
 
-        {/* Input Section */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-12 border border-slate-100">
           <textarea
             rows={6}
-            className="block w-full rounded-2xl border-2 border-slate-100 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 text-slate-700 p-5 border outline-none transition-all duration-300 text-base"
+            className="block w-full rounded-2xl border-2 border-slate-100 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 text-slate-700 p-5 outline-none transition-all text-base"
             placeholder="Dán nội dung bài báo vào đây..."
             value={newsText}
             onChange={(e) => setNewsText(e.target.value)}
           />
-          
-          {error && (
-            <div className="mt-4 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-bold border border-red-100 animate-pulse">
-              ⚠️ {error}
-            </div>
-          )}
-
+          {error && <div className="mt-4 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-bold border border-red-100">⚠️ {error}</div>}
           <div className="mt-8 flex justify-center">
             <button
               onClick={handleCheck}
               disabled={loading}
-              className={`px-12 py-4 text-lg font-black rounded-2xl shadow-xl text-white transition-all duration-300 ${
+              className={`px-12 py-4 text-lg font-black rounded-2xl shadow-xl text-white transition-all ${
                 loading ? 'bg-slate-400 cursor-not-allowed scale-95' : 'bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95'
               }`}
             >
@@ -254,10 +243,8 @@ function App() {
           </div>
         </div>
 
-        {/* Results... (giữ nguyên logic kết quả nhưng trình bày gọn hơn) */}
         {result && result.results && (
           <div className="animate-in fade-in duration-700">
-             {/* Model Tabs */}
              <div className="flex flex-wrap gap-2 mb-8 justify-center">
               {Object.keys(result.results).map((name) => (
                 <button
@@ -272,19 +259,9 @@ function App() {
                   {result.results[name].education?.name?.split(' (')[0] || name}
                 </button>
               ))}
-              <button
-                onClick={() => setActiveTab('doc2vec')}
-                className={`px-6 py-3 rounded-2xl text-xs font-black border-2 transition-all uppercase tracking-widest ${
-                  activeTab === 'doc2vec' 
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xl scale-110' 
-                    : 'bg-white text-slate-400 border-slate-100 hover:border-indigo-300'
-                }`}
-              >
-                Doc2Vec Vector
-              </button>
             </div>
 
-            {activeTab && activeTab !== 'doc2vec' && result.results[activeTab] && (
+            {activeTab && result.results[activeTab] && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                   <div className={`rounded-3xl shadow-xl p-8 border-t-8 bg-white ${
@@ -305,16 +282,13 @@ function App() {
                     </div>
                     {renderMetrics(result.results[activeTab].metrics)}
                   </div>
-
-                  <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+                  <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100 text-center">
                     <h3 className="text-sm font-black text-slate-400 uppercase mb-6 tracking-widest">💡 Giải thích từ AI</h3>
                     <p className="text-slate-700 font-bold mb-4 text-lg">{result.results[activeTab].education?.concept}</p>
-                    <p className="text-slate-500 italic leading-relaxed">{result.results[activeTab].education?.principle}</p>
+                    <p className="text-slate-500 italic leading-relaxed text-center">{result.results[activeTab].education?.principle}</p>
                   </div>
-
                   <ConfusionMatrix matrix={result.results[activeTab].metrics?.confusion_matrix} />
                 </div>
-
                 <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl h-fit sticky top-24">
                   <h3 className="text-xs font-black text-blue-400 uppercase mb-6 tracking-widest">Quy trình xử lý</h3>
                   <div className="space-y-4">
@@ -325,22 +299,6 @@ function App() {
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'doc2vec' && (
-              <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100 animate-in zoom-in duration-500">
-                <h2 className="text-3xl font-black text-indigo-700 mb-4 uppercase">Đặc trưng ngữ nghĩa (Doc2Vec)</h2>
-                <p className="text-slate-500 mb-8 font-medium">Văn bản của bạn đã được chuyển đổi thành dãy số 100 chiều để AI so sánh với kho dữ liệu khổng lồ.</p>
-                <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2">
-                  {result.doc2vec_vector?.map((val, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="w-full bg-indigo-50 border border-indigo-100 p-2 text-center text-[10px] font-bold text-indigo-600 rounded-lg">
-                        {val.toFixed(2)}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}

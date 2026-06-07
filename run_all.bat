@@ -57,13 +57,16 @@ if not exist "frontend\node_modules\.bin\vite.cmd" (
     cd frontend && call npm install vite && cd ..
 )
 
-:: 1. Khoi chay Backend trong nen (background) cua cua so nay
-echo [+] Dang khoi chay Backend (FastAPI)...
+:: 1. Khoi chay cac Backend trong nen (background)
+echo [+] Dang khoi chay Backend Du doan (FastAPI: 8000)...
 start /b python main.py
 
-:: 2. Doi mot chut de Backend san sang, sau do mo trinh duyet
+echo [+] Dang khoi chay Backend Huan luyen (FastAPI: 8001)...
+start /b python training_api.py
+
+:: 2. Doi mot chut de cac Backend san sang, sau do mo trinh duyet
 echo [+] Dang chuan bi mo trinh duyet...
-timeout /t 5 /nobreak > nul
+timeout /t 7 /nobreak > nul
 start "" "http://localhost:5173"
 
 :: 3. Khoi chay Frontend trong cua so nay (foreground)
