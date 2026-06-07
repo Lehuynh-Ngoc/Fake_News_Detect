@@ -121,7 +121,47 @@ Giải pháp này giúp hệ thống đạt độ chính xác **99%** trong vi�
 
 ---
 
-## Phần 3. KẾT LUẬN VÀ KIẾN NGHỊ
+## Phần 3. TÍNH NĂNG NÂNG CAO: HỆ THỐNG HUẤN LUYỆN TỰ ĐỘNG (AI TRAINING)
+
+Hệ thống cung cấp giao diện quản lý huấn luyện mô hình trực quan, giúp người dùng tự cập nhật tri thức cho AI mà không cần can thiệp vào mã nguồn.
+
+### 3.1 Giao diện điều khiển (Training Control Panel)
+*   **Lựa chọn mô hình:** Cho phép chọn huấn luyện riêng lẻ các mô hình Transformer (PhoBERT, ViBERT, SBERT) hoặc toàn bộ nhóm Machine Learning.
+*   **Cấu hình Epoch:** Tùy chỉnh số vòng lặp huấn luyện trực tiếp trên web.
+*   **Terminal ảo:** Hiển thị log chi tiết quá trình chạy code thời gian thực.
+*   **Điều khiển:** Nút "Bắt đầu" và "Dừng huấn luyện" (Terminate) giúp quản lý tài nguyên tức thì.
+
+### 3.2 Hệ thống theo dõi tài nguyên (Resource Monitor)
+*   **CPU & RAM:** Theo dõi phần trăm sử dụng bộ vi xử lý và bộ nhớ hệ thống.
+*   **GPU VRAM:** (Nếu có) Hiển thị thông tin tên card đồ họa và dung lượng bộ nhớ đồ họa đang chiếm dụng.
+*   **Trạng thái kết nối:** Tự động phát hiện và cảnh báo nếu máy chủ huấn luyện chưa khởi động.
+
+### 3.3 Công nghệ tối ưu hóa huấn luyện
+*   **Early Stopping:** Tự động dừng huấn luyện nếu mô hình không cải thiện sau 3 Epoch, giúp chống **Overfitting** (Học vẹt).
+*   **Best Checkpoint Only:** Chỉ lưu lại phiên bản tốt nhất của mô hình BERT để tiết kiệm dung lượng ổ cứng (giảm từ hàng GB xuống còn vài trăm MB).
+*   **Persistence:** Hệ thống ghi nhớ trạng thái huấn luyện. Người dùng có thể chuyển trang và quay lại mà không mất log hay tiến độ.
+
+---
+
+## Phần 4. HƯỚNG DẪN CÀI ĐẶT VÀ KHỞI CHẠY
+
+### 4.1 Yêu cầu hệ thống
+*   **Python:** 3.12+
+*   **Node.js:** 20+ (khuyên dùng v22)
+*   **Phần cứng:** Tối thiểu 8GB RAM. Khuyên dùng GPU NVIDIA để huấn luyện các dòng BERT nhanh hơn.
+
+### 4.2 Khởi chạy nhanh (One-Click Startup)
+Cậu chỉ cần chạy duy nhất file sau:
+1.  Chạy **`run_all.bat`**: Script sẽ tự động cài đặt thư viện (nếu thiếu), khởi động Backend dự đoán, Backend huấn luyện và mở giao diện web.
+
+### 4.3 Khởi chạy thủ công
+*   **Backend Dự đoán:** `python main.py` (Port 8000)
+*   **Backend Huấn luyện:** `python training_api.py` (Port 8001)
+*   **Frontend:** `cd frontend && npm run dev` (Port 5173)
+
+---
+
+## Phần 5. KẾT LUẬN VÀ KIẾN NGHỊ
 
 ### Kết luận
 Dự án đã hoàn thành mục tiêu xây dựng một công cụ kiểm chứng tin tức thông minh. Sự kết hợp giữa **Machine Learning** và **Heuristic Logic** đã chứng minh được tính hiệu quả vượt trội so với các phương pháp đơn lẻ, đặc biệt là trong việc giảm tỷ lệ nhận nhầm (False Positive) các bài viết đính chính khoa học.

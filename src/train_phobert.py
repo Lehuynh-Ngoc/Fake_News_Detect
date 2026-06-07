@@ -6,7 +6,7 @@ import json
 import time
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, EarlyStoppingCallback
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -71,7 +71,7 @@ def load_data_from_dir(dir_path):
     if not dfs: return pd.DataFrame()
     return pd.concat(dfs, ignore_index=True)
 
-def train_phobert(data_dir, models_dir):
+def train_phobert(data_dir, models_dir, epochs=10):
     start_total = time.time()
     
     # --- BUOC 1: DOC DU LIEU ---
@@ -125,7 +125,7 @@ def train_phobert(data_dir, models_dir):
     
     training_args = TrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=10,
+        num_train_epochs=epochs,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
         warmup_steps=500,
@@ -134,6 +134,8 @@ def train_phobert(data_dir, models_dir):
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
+        save_total_limit=1,
+        metric_for_best_model="f1",
         report_to="none",
     )
 
@@ -147,6 +149,7 @@ def train_phobert(data_dir, models_dir):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
     )
 
     print("  - Tien trinh huan luyen (co the mat nhieu thoi gian nhat):")
